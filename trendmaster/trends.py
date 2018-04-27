@@ -20,6 +20,7 @@ class InvalidGameStateError(RuntimeError):
 
 class GoogleTrendsGame:
     """Google trends game class"""
+    trender: TrendReq
     scores: Dict[Member, int]
     # words for a current round implemented as a dictionary mapped
     # to the user and the word the user submitted
