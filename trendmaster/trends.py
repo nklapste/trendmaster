@@ -2,13 +2,19 @@
 # -*- coding: utf-8 -*-
 
 """interactions with Google Trends"""
-
+import copy
+import random
+from enum import Enum
+from logging import getLogger
 from typing import Dict, List
 
 from discord import Member
 from pytrends.request import TrendReq
 
+__log__ = getLogger(__name__)
 
+
+# TODO: check how they encode spaces on google trends
 def get_google_trends_url(words: List[str]) -> str:
     """Create a url to a google trends page with the inputted words queried"""
     return "https://trends.google.com/trends/explore" + "?q={}".format(",".join(words))
@@ -16,6 +22,74 @@ def get_google_trends_url(words: List[str]) -> str:
 
 class InvalidGameStateError(RuntimeError):
     pass
+
+
+# {theme: [questions]}
+QUESTSIONS = [
+    # naughty
+    "lewd",
+    "porn",
+    "prison",
+    "assault",
+    "nudes",
+
+    # normal
+    "cat",
+    "dog",
+    "food",
+    "wedding",
+
+    # movies
+    "disney",
+    "pixar",
+
+    # video games
+    "game",
+    "vrchat",
+    "steam",
+    "update",
+    "patch",
+    "twitch",
+    "stream",
+    "minecraft",
+    "VR",
+    "skyrim",
+
+    # computers,
+    "facebook",
+    "youtube",
+    "google",
+    "instagram",
+    "snapchat",
+    "myspace",
+    "spotify",
+    "windows",
+    "mac",
+    "apple",
+    "linux",
+
+    # political
+    "obama",
+    "trump",
+    "the queen",
+    "russia",
+    "china",
+    "US",
+    "wall",
+    "republican",
+    "democrat",
+    "election",
+    "immigration",
+
+    # inside jokes
+    "thot",
+    "a fly in the wind",
+]
+
+
+class Position(Enum):
+    front = "front"
+    back = "back"
 
 
 class GoogleTrendsGame:
@@ -31,28 +105,34 @@ class GoogleTrendsGame:
 
     def __init__(self):
         self.trender = TrendReq()
-        # TODO: make internal getter/setter
         self.scores = {}
         self.words = {}
         self.question = None
+        self.available_questions = copy.copy(QUESTSIONS)
 
     def start_round(self):
         """Start a round of GoogleTrendsGame"""
         # ensure we are not in the middle of a round
         if self.words or self.question:
             raise InvalidGameStateError("A round is already in progress")
+        self.question = random.choice(self.available_questions)
+        self.available_questions.remove(self.question)
 
-        # TODO: set round_question
-        self.question = "{} update"
-
-    def add_word(self, word: str, player: Member):
+    def add_word(self, word: str, player: Member, position: Position = Position.front) -> str:
         """Add a players word to the rounds words"""
-        self.words[player] = self.question.format(word)
+        if position == Position.front:
+            self.words[player] = "{} {}".format(word, self.question)
+        elif position == position.back:
+            self.words[player] = "{} {}".format(self.question, word)
+        else:
+            raise ValueError("Invalid Position: {}".format(position))
+
+        # add the player to the scores if they are not already
         if player not in self.scores:
             self.scores[player] = 0
         return self.words[player]
 
-    def end_round(self):
+    def end_round(self) -> Dict[str, int]:
         """End a round of GoogleTrendsGame"""
         # ensure we are in a round
         if not self.words or not self.question:
