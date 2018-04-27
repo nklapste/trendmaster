@@ -92,6 +92,7 @@ class TestGoogleTrendsGame:
 
         results = self.game.end_round()
         assert results
+        assert isinstance(results, dict)
 
     def test_end_round_fail(self):
         """Test GoogleTrendsGame.end_round() with no round actually started
