@@ -29,9 +29,11 @@ QUESTSIONS = [
     # naughty
     "lewd",
     "porn",
+    "hentai",
     "prison",
     "assault",
     "nudes",
+    "noods",
 
     # normal
     "cat",
@@ -42,6 +44,7 @@ QUESTSIONS = [
     # movies
     "disney",
     "pixar",
+    "anime",
 
     # video games
     "game",
@@ -54,6 +57,8 @@ QUESTSIONS = [
     "minecraft",
     "VR",
     "skyrim",
+    "zelda",
+
 
     # computers,
     "facebook",
@@ -82,6 +87,8 @@ QUESTSIONS = [
     "immigration",
 
     # inside jokes
+    "respect",
+    "ramen",
     "thot",
     "a fly in the wind",
 ]
