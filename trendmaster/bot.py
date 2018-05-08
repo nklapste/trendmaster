@@ -16,8 +16,8 @@ from discord.ext.commands.context import Context
 from trendmaster.trends import GoogleTrendsGame, get_google_trends_url, Position
 
 
-DESCRIPTION = """A Discord bot for playing a "Family Feud" like game using 
-Google Trends!"""
+DESCRIPTION = """A Discord bot for playing a "Family Feud" like game using the
+Google Trends analytics engine!"""
 
 BOT = commands.Bot(command_prefix=["trendmaster ", "!t"], description=DESCRIPTION)
 
@@ -45,10 +45,9 @@ class TrendMaster:
         try:
             return self.active_games[ctx.message.server][ctx.message.channel]
         except KeyError:
-            self.bot.send_message(
-                ctx.message.channel,
+            self.bot.say(
                 "A GoogleTrendsGame is not active in this channel!\n"
-                "Please start one using `start_game` before using the previous command!"
+                "Please start a GoogleTrendsGame by using the `start_game` command before using the previous command!"
             )
             raise
 
@@ -56,8 +55,7 @@ class TrendMaster:
     async def games(self, ctx: Context):
         """List the GoogleTrendsGames active on the server's channels"""
         self.active_games[ctx.message.server] = self.active_games.get(ctx.message.server, {})
-        await self.bot.send_message(
-            ctx.message.channel,
+        await self.bot.say(
             "The following channels have active GoogleTrendsGames:\n{}".format(
                 "\n".join([channel.name for channel in self.active_games[ctx.message.server].keys()])
             )
@@ -68,15 +66,13 @@ class TrendMaster:
         """Start a new game of a GoogleTrendsGame in the current channel"""
         self.active_games[ctx.message.server] = self.active_games.get(ctx.message.server, {})
         if self.active_games[ctx.message.server].get(ctx.message.channel):
-            await self.bot.send_message(
-                ctx.message.channel,
+            await self.bot.say(
                 "A GoogleTrendsGame is already active in this channel!\n"
                 "Please end it using `end_game` before starting a new game!"
             )
         else:
             self.active_games[ctx.message.server][ctx.message.channel] = GoogleTrendsGame()
-            await self.bot.send_message(
-                ctx.message.channel,
+            await self.bot.say(
                 "Starting a new GoogleTrendsGame in the current channel!"
             )
 
@@ -86,8 +82,7 @@ class TrendMaster:
         # TODO: ensure not overwriting another active round
         active_game = self._get_channel_game(ctx)
         active_game.start_round()
-        await self.bot.send_message(
-            ctx.message.channel,
+        await self.bot.say(
             "Round started!\n"
             "The current rounds question is: {}".format(
                 active_game.question
@@ -105,31 +100,36 @@ class TrendMaster:
             place your word relative the question term. (Default: "front")
         """
         active_game = self._get_channel_game(ctx)
-        await self.bot.whisper(
-            "Your round's response was: {}".format(
-                active_game.add_word(word.strip(), ctx.message.author, Position(position.lower().strip()))
+        try:
+            await self.bot.whisper(
+                "Your round's response was: {}".format(
+                    active_game.add_word(word.strip(), ctx.message.author, Position(position.lower().strip()))
+                )
             )
-        )
+        except Exception as e:  # TODO: better catch
+            await self.bot.whisper(
+                "Failed to add your rounds response: {}".format(e)
+            )
+
 
     @commands.command(pass_context=True)
     async def end_round(self, ctx: Context):
         """End the channel's GoogleTrendsGame's round"""
         # post the google trends frontend results link
         active_game = self._get_channel_game(ctx)
-        await self.bot.send_message(
-            ctx.message.channel,
+        await self.bot.say(
             get_google_trends_url(list(active_game.words.values()))
         )
 
         # post the round results backend data
         round_results = active_game.end_round()
-        await self.bot.send_message(
-            ctx.message.channel,
+        await self.bot.say(
             "Round ended!\n"
             "Round results: {}".format(round_results)
         )
 
         # post the games current scores
+        # TODO: make internal function
         await self.scores(ctx)
 
     @commands.command(pass_context=True)
@@ -138,8 +138,7 @@ class TrendMaster:
         active_game = self._get_channel_game(ctx)
         scores = active_game.scores
         winner = max(scores.items(), key=operator.itemgetter(1))[0]
-        await self.bot.send_message(
-            ctx.message.channel,
+        await self.bot.say(
             "Game ended!\n"
             "{} wins with {} points!\n"
             "The ending scores are:\n{}".format(winner, scores[winner], "\n".join(["{}: {}".format(k, v) for k, v in scores.items()]))
@@ -152,8 +151,7 @@ class TrendMaster:
         """Report the channel's GoogleTrendsGame's scores"""
         active_game = self._get_channel_game(ctx)
         scores = active_game.scores
-        await self.bot.send_message(
-            ctx.message.channel,
+        await self.bot.say(
             "The current scores are:\n{}".format(
                 "\n".join(["{}: {}".format(k, v) for k, v in scores.items()])
             )

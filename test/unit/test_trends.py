@@ -88,7 +88,7 @@ class TestGoogleTrendsGame:
     def test_end_round(self):
         """Test GoogleTrendsGame.end_round()"""
         self.game.start_round()
-        self.game.add_word("example", "player_1")
+        self.game.add_word("example", "player")
 
         results = self.game.end_round()
         assert results

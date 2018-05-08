@@ -11,13 +11,14 @@ from typing import Dict, List
 from discord import Member
 from pytrends.request import TrendReq
 
+from urllib.parse import quote
 __log__ = getLogger(__name__)
 
 
 # TODO: check how they encode spaces on google trends
 def get_google_trends_url(words: List[str]) -> str:
     """Create a url to a google trends page with the inputted words queried"""
-    return "https://trends.google.com/trends/explore" + "?q={}".format(",".join(words))
+    return "https://trends.google.com/trends/explore" + "?q={}".format(",".join(map(quote, words)))
 
 
 class InvalidGameStateError(RuntimeError):
@@ -34,6 +35,9 @@ QUESTSIONS = [
     "assault",
     "nudes",
     "noods",
+    "rule34",
+    "rule63",
+    "fapfic",
 
     # normal
     "cat",
@@ -45,6 +49,7 @@ QUESTSIONS = [
     "disney",
     "pixar",
     "anime",
+    "fanfic",
 
     # video games
     "game",
@@ -55,12 +60,14 @@ QUESTSIONS = [
     "twitch",
     "stream",
     "minecraft",
+    "roblox",
     "VR",
     "skyrim",
     "zelda",
-
+    "mario",
 
     # computers,
+    "discord",
     "facebook",
     "youtube",
     "google",
@@ -91,6 +98,7 @@ QUESTSIONS = [
     "ramen",
     "thot",
     "a fly in the wind",
+    "cummies",
 ]
 
 
@@ -146,8 +154,15 @@ class GoogleTrendsGame:
             raise InvalidGameStateError("No round in progress to end")
 
         self.trender.build_payload(self.words.values())
+
         df = self.trender.interest_over_time()
-        df = df.drop(columns=["isPartial"])
+        print(df)
+
+        self.trender.build_payload("doot")
+        df = self.trender.interest_over_time()
+        print(df)
+
+        # df = df.drop(columns=["isPartial"])
         wintuples = dict(zip(df.columns.tolist(), df.values[-1].tolist()))
 
         for player in self.words:
