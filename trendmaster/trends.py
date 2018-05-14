@@ -2,20 +2,21 @@
 # -*- coding: utf-8 -*-
 
 """interactions with Google Trends"""
+
 import copy
 import random
 from enum import Enum
 from logging import getLogger
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from discord import Member
 from pytrends.request import TrendReq
+from pytrends.exceptions import ResponseError
 
 from urllib.parse import quote
 __log__ = getLogger(__name__)
 
 
-# TODO: check how they encode spaces on google trends
 def get_google_trends_url(words: List[str]) -> str:
     """Create a url to a google trends page with the inputted words queried"""
     return "https://trends.google.com/trends/explore" + "?q={}".format(",".join(map(quote, words)))
@@ -147,27 +148,36 @@ class GoogleTrendsGame:
             self.scores[player] = 0
         return self.words[player]
 
-    def end_round(self) -> Dict[str, int]:
+    def end_round(self) -> Optional[Dict[str, int]]:
         """End a round of GoogleTrendsGame"""
         # ensure we are in a round
         if not self.words or not self.question:
             raise InvalidGameStateError("No round in progress to end")
 
+        __log__.debug("requesting google trends interest over time for the "
+                      "following terms: {}".format(self.words.values()))
+
         self.trender.build_payload(self.words.values())
+        try:
+            df = self.trender.interest_over_time()
+        except ResponseError:
+            return
 
-        df = self.trender.interest_over_time()
-        print(df)
+        try:
+            df = df.drop(columns=["isPartial"])
+        except ValueError:
+            pass
 
-        self.trender.build_payload("doot")
-        df = self.trender.interest_over_time()
-        print(df)
+        # todo: make special response for empty response
+        if df.empty:
+            return
 
-        # df = df.drop(columns=["isPartial"])
+        __log__.debug("obtained the following data frame: {}".format(df))
+        # get the most recent trend numbers
         wintuples = dict(zip(df.columns.tolist(), df.values[-1].tolist()))
 
         for player in self.words:
             self.scores[player] += wintuples[self.words[player]]
-
         # cleanup the current round
         self.words.clear()
         self.question = None
