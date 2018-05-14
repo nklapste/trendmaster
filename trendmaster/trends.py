@@ -158,6 +158,8 @@ class GoogleTrendsGame:
                       "following terms: {}".format(self.words.values()))
 
         self.trender.build_payload(self.words.values())
+
+        # todo: make special response for empty response
         try:
             df = self.trender.interest_over_time()
         except ResponseError:
